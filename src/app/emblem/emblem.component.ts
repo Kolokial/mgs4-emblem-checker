@@ -12,19 +12,7 @@ import { Observable } from 'rxjs';
 })
 export class EmblemComponent {
   @Input() emblemImageSrc: string = '';
-  public emblemDisplay: boolean = false;
+  @Input() emblemDisplay: boolean = false;
 
-  constructor(private _gameDataService: GameDataService) {}
-
-  ngOnInit() {
-    const observable = this._gameDataService.getGameDataObservable('Total Play Time') as Observable<string>;
-
-    observable.subscribe((x) => {
-      if (x === '00:00:01') {
-        this.emblemDisplay = true;
-      } else {
-        this.emblemDisplay = false;
-      }
-    });
-  }
+  constructor() {}
 }

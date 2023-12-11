@@ -4,11 +4,21 @@ import { AppComponent } from './app.component';
 import { GameDataInputModule } from './game-data-input/game-data-input.module';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
-import { EmblemComponent } from './emblem/emblem.component';
+import { ChickenEmblemComponent } from './emblems/chicken-emblem/chicken-emblem.component';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatGridListModule } from '@angular/material/grid-list';
 
 @NgModule({
-  imports: [BrowserModule, CommonModule, GameDataInputModule, EmblemComponent, RouterOutlet],
   declarations: [AppComponent],
   bootstrap: [AppComponent],
+  imports: [
+    BrowserModule,
+    CommonModule,
+    GameDataInputModule,
+    RouterOutlet,
+    ChickenEmblemComponent,
+    MatDividerModule,
+    MatGridListModule,
+  ],
 })
 export class AppModule {}

@@ -1,7 +1,10 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, ValidatorFn } from '@angular/forms';
 import { IGameDataFormMetaData } from './IGameDataFormControls';
 import { GameDataService } from '../game-data-service/game-data.service';
+import { Difficulty } from './DifficultyEnums';
+import { KeyValue } from '@angular/common';
+import { Duration } from '../helpers/duration/duration.component';
 
 @Component({
   selector: 'game-data-input',
@@ -10,11 +13,10 @@ import { GameDataService } from '../game-data-service/game-data.service';
   styleUrl: './game-data-input.component.scss',
 })
 export class GameDataInputComponent {
-  constructor(private _gameDataService: GameDataService) {}
-  @Output() public totalPlayTime: EventEmitter<string> = new EventEmitter<string>();
-
+  public difficulties = Difficulty;
   public form: FormGroup<IGameDataFormMetaData> = new FormGroup<IGameDataFormMetaData>({
-    'Total Play Time': new FormControl<string>('00:00:00', this.durationValidation()),
+    Difficulty: new FormControl<Difficulty>(Difficulty.LiquidEasy),
+    'Total Play Time': new FormControl<string>(''),
     Continues: new FormControl<number>(0),
     'Alert Phases': new FormControl<number>(0),
     'Total Kills': new FormControl<number>(0),
@@ -25,12 +27,12 @@ export class GameDataInputComponent {
     'CQC Uses': new FormControl<number>(0),
     Headshots: new FormControl<number>(0),
     'Knife Kills/Knockouts': new FormControl<number>(0),
-    'Wall Press Time': new FormControl<string>('00:00:00', this.durationValidation()),
+    'Wall Press Time': new FormControl<string>('00:00:00'),
     'Sideways Rolls': new FormControl<number>(0),
     'Forward Rolls': new FormControl<number>(0),
-    'Crawling Time': new FormControl<string>('00:00:00', this.durationValidation()),
-    'Crouch Walking Time': new FormControl<string>('00:00:00', this.durationValidation()),
-    'Time in Cardboard Box/Drum': new FormControl<string>('00:00:00', this.durationValidation()),
+    'Crawling Time': new FormControl<string>('00:00:00'),
+    'Crouch Walking Time': new FormControl<string>('00:00:00'),
+    'Time in Cardboard Box/Drum': new FormControl<string>('00:00:00'),
     'Combat Highs': new FormControl<number>(0),
     'Weapons/Items Acquired': new FormControl<number>(0),
     'Total Drebin Points from Sales': new FormControl<number>(0),
@@ -41,39 +43,15 @@ export class GameDataInputComponent {
     return this.form.controls['Total Play Time'];
   }
 
+  constructor(private _gameDataService: GameDataService) {}
+
   ngOnInit() {
     Object.entries(this.form.controls).forEach((entry) => {
       const key: string = entry[0];
       const control: FormControl<number | string | boolean> = entry[1];
-      this._gameDataService.addGameDataObservable(key, control.valueChanges);
+      this._gameDataService.addObservable(key, control.valueChanges);
     });
   }
 
-  insertColonForDuration(control: FormControl<string | null>): void {
-    const currentValue = control.value;
-
-    if (currentValue == null) {
-      control.reset();
-    }
-
-    if (currentValue?.match('^\\d{2,}$') || currentValue?.match('^\\d+:\\d{2}$')) {
-      control.setValue(`${currentValue}:`);
-    }
-  }
-
-  private durationValidation(): ValidatorFn {
-    return (control: AbstractControl) => {
-      //TODO: Validate minutes and seconds aren't above 59
-      if (control == null) {
-        return null;
-      }
-      const value: string = control.value;
-      if (value.match('^\\d+:\\d{2}:\\d{2}$')) {
-        return null;
-      }
-      return {
-        test: false,
-      };
-    };
-  }
+  originalOrder = (a: KeyValue<string, Difficulty>, b: KeyValue<string, Difficulty>) => 0;
 }

@@ -1,3 +1,10 @@
-<game-data-input (totalPlayTime)="updateTotalPlayTime($event)" ></game-data-input>
-<p>{{totalPlayTime}}</p>
-<emblem emblemImageSrc="./assets/pigeon.png"></emblem>
+<h1>Hello, {{ title }}</h1>
+<div class="container">
+  <span class="item">
+    <game-data-input></game-data-input>
+  </span>
+
+  <span class="item">
+    <chicken-emblem></chicken-emblem>
+  </span>
+</div>

@@ -1,0 +1,15 @@
+:host {
+    display: inline-block;
+    width:220px;
+  }
+
+  .difficulty-radio-group {
+    display: flex;
+    flex-direction: column;
+    margin: 15px 0;
+    align-items: flex-start;
+  }
+  
+  .difficulty-radio-button {
+    margin: 5px;
+  }

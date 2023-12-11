@@ -1,0 +1,13 @@
+.duration {
+    width: 30px;
+    display:inline-block;
+    border: 0;
+    background: transparent;
+    color: white;
+
+    &:focus-visible{
+        border-color: none;
+        outline: none;
+        
+    }
+}

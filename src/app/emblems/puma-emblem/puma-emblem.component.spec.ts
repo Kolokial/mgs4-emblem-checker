@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { EmblemComponent } from './emblem.component';
+import { PumaEmblemComponent } from './puma-emblem.component';
 
-describe('EmblemComponent', () => {
-  let component: EmblemComponent;
-  let fixture: ComponentFixture<EmblemComponent>;
+describe('PumaEmblemComponent', () => {
+  let component: PumaEmblemComponent;
+  let fixture: ComponentFixture<PumaEmblemComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [EmblemComponent]
+      imports: [PumaEmblemComponent]
     })
     .compileComponents();
     
-    fixture = TestBed.createComponent(EmblemComponent);
+    fixture = TestBed.createComponent(PumaEmblemComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

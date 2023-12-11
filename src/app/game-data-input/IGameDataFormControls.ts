@@ -1,6 +1,8 @@
 import { FormControl } from '@angular/forms';
+import { Difficulty } from './DifficultyEnums';
 
 export type IGameDataFormMetaData = {
+  Difficulty: FormControl<Difficulty>;
   'Total Play Time': FormControl<string>;
   Continues: FormControl<number>;
   'Alert Phases': FormControl<number>;
