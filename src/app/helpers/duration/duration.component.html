@@ -1,34 +1,43 @@
-<div [formGroup]="durationParts">
+<div
+  [formGroup]="durationParts"
+  role="group"
+  class="duration-container"
+  [attr.aria-labelledby]="_formField.getLabelId()"
+  (focusin)="onFocusIn($event)"
+  (focusout)="onFocusOut($event)"
+>
   <input
     #hours
     class="duration"
     formControlName="hours"
     type="text"
-    (input)="handleInput(durationParts.controls['hours'], minutes)"
     required
     maxlength="3"
     size="3"
+    aria-label="Hours"
   />
-  <span>:</span>
+  <span class="spacer">:</span>
   <input
     #minutes
     class="duration"
     formControlName="minutes"
     type="text"
-    (input)="handleInput(durationParts.controls['minutes'], seconds)"
     (keyup.backspace)="autoFocusPrev(durationParts.controls['minutes'], hours)"
+    (keyup.delete)="autoFocusPrev(durationParts.controls['minutes'], hours)"
     maxlength="2"
     size="2"
+    aria-label="minutes"
   />
-  <span>:</span>
+  <span class="spacer">:</span>
   <input
     #seconds
     class="duration"
     formControlName="seconds"
     type="text"
-    (input)="handleInput(durationParts.controls['seconds'])"
     (keyup.backspace)="autoFocusPrev(durationParts.controls['seconds'], minutes)"
+    (keyup.delete)="autoFocusPrev(durationParts.controls['seconds'], minutes)"
     maxlength="2"
     size="2"
+    aria-label="2"
   />
 </div>

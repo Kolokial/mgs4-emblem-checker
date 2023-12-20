@@ -11,3 +11,11 @@
         
     }
 }
+
+.spacer {
+    opacity: 0;
+}
+
+:host.example-floating .spacer {
+    opacity: 1;
+}

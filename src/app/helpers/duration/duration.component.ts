@@ -2,25 +2,30 @@ import {
   Component,
   ElementRef,
   HostBinding,
+  Inject,
   Input,
+  OnDestroy,
   Optional,
   Self,
   ViewChild,
+  forwardRef,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   AbstractControl,
   ControlValueAccessor,
   FormBuilder,
+  FormControl,
   FormGroup,
   FormsModule,
   NgControl,
   ReactiveFormsModule,
+  ValidationErrors,
   ValidatorFn,
   Validators,
 } from '@angular/forms';
-import { MatFormFieldControl } from '@angular/material/form-field';
-import { Subject } from 'rxjs';
+import { MAT_FORM_FIELD, MatFormField, MatFormFieldControl } from '@angular/material/form-field';
+import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { BooleanInput, coerceBooleanProperty } from '@angular/cdk/coercion';
 import { FocusMonitor } from '@angular/cdk/a11y';
 
@@ -54,12 +59,18 @@ export class Duration {
 @Component({
   selector: 'duration',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, forwardRef(() => DurationComponent)],
   templateUrl: './duration.component.html',
   styleUrl: './duration.component.scss',
+  host: {
+    '[class.example-floating]': 'shouldLabelFloat',
+    '[id]': 'id',
+  },
   providers: [{ provide: MatFormFieldControl, useExisting: DurationComponent }],
 })
-export class DurationComponent implements MatFormFieldControl<Duration>, ControlValueAccessor {
+export class DurationComponent
+  implements MatFormFieldControl<Duration>, ControlValueAccessor, OnDestroy
+{
   static nextId = 0;
   @ViewChild('hours') hoursInput: ElementRef;
   @ViewChild('minutes') minutesInput: ElementRef;
@@ -68,13 +79,11 @@ export class DurationComponent implements MatFormFieldControl<Duration>, Control
   durationParts: FormGroup;
   stateChanges = new Subject<void>();
   focused: boolean;
-  shouldLabelFloat: boolean;
   controlType?: string;
   autofilled?: boolean;
   userAriaDescribedBy?: string;
   onChange = (newDuration: Duration) => {};
   onTouched = () => {};
-
   @HostBinding() id = `example-tel-input-${DurationComponent.nextId++}`;
   touched: boolean;
 
@@ -88,16 +97,16 @@ export class DurationComponent implements MatFormFieldControl<Duration>, Control
   }
   private _placeholder: string;
 
-  private get hoursControl(): AbstractControl {
-    return this.durationParts.controls['hours'];
+  private get hoursControl(): FormControl<string> {
+    return this.durationParts.controls['hours'] as FormControl<string>;
   }
 
-  private get minutesControl(): AbstractControl {
-    return this.durationParts.controls['minutes'];
+  private get minutesControl(): FormControl<string> {
+    return this.durationParts.controls['minutes'] as FormControl<string>;
   }
 
-  private get secondsControl(): AbstractControl {
-    return this.durationParts.controls['seconds'];
+  private get secondsControl(): FormControl<string> {
+    return this.durationParts.controls['seconds'] as FormControl<string>;
   }
 
   get empty() {
@@ -105,11 +114,15 @@ export class DurationComponent implements MatFormFieldControl<Duration>, Control
     return !n.hours && !n.minutes && !n.seconds;
   }
 
+  get shouldLabelFloat() {
+    return this.focused || !this.empty;
+  }
+
   @Input() get value(): Duration {
     return new Duration(
-      this.hoursControl.value,
-      this.minutesControl.value,
-      this.secondsControl.value
+      parseInt(this.hoursControl.value),
+      parseInt(this.minutesControl.value),
+      parseInt(this.secondsControl.value)
     );
   }
 
@@ -150,6 +163,7 @@ export class DurationComponent implements MatFormFieldControl<Duration>, Control
 
   constructor(
     @Optional() @Self() public ngControl: NgControl,
+    @Optional() @Inject(MAT_FORM_FIELD) public _formField: MatFormField,
     private _formBuilder: FormBuilder,
     private _elementRef: ElementRef,
     private _focusMonitor: FocusMonitor
@@ -159,10 +173,54 @@ export class DurationComponent implements MatFormFieldControl<Duration>, Control
     }
 
     this.durationParts = this._formBuilder.group({
-      hours: ['', [Validators.required, Validators.maxLength(3), Validators.minLength(1)]],
-      minutes: ['', [Validators.required, Validators.maxLength(2), Validators.minLength(1)]],
-      seconds: ['', [Validators.required, Validators.maxLength(2), Validators.minLength(1)]],
+      hours: [
+        '',
+        [
+          Validators.required,
+          Validators.maxLength(3),
+          Validators.minLength(2),
+          this.getDurationValidatorFn(999),
+        ],
+      ],
+      minutes: [
+        '',
+        [
+          Validators.required,
+          Validators.maxLength(2),
+          Validators.minLength(2),
+          this.getDurationValidatorFn(),
+        ],
+      ],
+      seconds: [
+        '',
+        [
+          Validators.required,
+          Validators.maxLength(2),
+          Validators.minLength(2),
+          this.getDurationValidatorFn(),
+        ],
+      ],
     });
+  }
+
+  ngAfterViewInit() {
+    this.hoursControl.valueChanges
+      .pipe(debounceTime(500), distinctUntilChanged())
+      .subscribe((hourValue) => {
+        this.handleInput(this.hoursControl, this.minutesInput.nativeElement);
+      });
+
+    this.minutesControl.valueChanges
+      .pipe(debounceTime(500), distinctUntilChanged())
+      .subscribe((minutesValue) => {
+        this.handleInput(this.minutesControl, this.secondsInput.nativeElement);
+      });
+
+    this.secondsControl.valueChanges
+      .pipe(debounceTime(500), distinctUntilChanged())
+      .subscribe((secondsValue) => {
+        this.handleInput(this.secondsControl);
+      });
   }
 
   ngOnDestroy() {
@@ -171,7 +229,7 @@ export class DurationComponent implements MatFormFieldControl<Duration>, Control
   }
 
   autoFocusNext(control: AbstractControl, nextElement?: HTMLInputElement): void {
-    if (!control.errors && nextElement) {
+    if (!control.errors && nextElement && this.durationParts.invalid) {
       this._focusMonitor.focusVia(nextElement, 'program');
     }
   }
@@ -198,13 +256,14 @@ export class DurationComponent implements MatFormFieldControl<Duration>, Control
     if (!this._elementRef.nativeElement.contains(event.relatedTarget as Element)) {
       this.touched = true;
       this.focused = false;
-      //this.onTouched();
+      this.onTouched();
       this.stateChanges.next();
     }
   }
 
-  setDescribedByIds(ids: string[]): void {
-    //throw new Error('Method not implemented.');
+  setDescribedByIds(ids: string[]) {
+    const controlElement = this._elementRef.nativeElement.querySelector('.duration-container')!;
+    controlElement.setAttribute('aria-describedby', ids.join(' '));
   }
 
   onContainerClick() {
@@ -226,6 +285,12 @@ export class DurationComponent implements MatFormFieldControl<Duration>, Control
         this.value = new Duration(parseInt(hours), parseInt(minutes), parseInt(seconds));
       }
     } else if (typeof durationTime === 'number') {
+      const hours = Math.floor(durationTime / 3600);
+      durationTime -= hours * 3600;
+      const minutes = Math.floor((durationTime % 3600) / 60);
+      durationTime -= minutes * 60;
+      const seconds = durationTime;
+      this.value = new Duration(hours, minutes, seconds);
     }
   }
 
@@ -241,19 +306,26 @@ export class DurationComponent implements MatFormFieldControl<Duration>, Control
     this.disabled = isDisabled;
   }
 
-  private durationValidation(): ValidatorFn {
-    return (control: AbstractControl) => {
-      //TODO: Validate minutes and seconds aren't above 59
+  private getDurationValidatorFn(maxUnitOfTime?: number): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      maxUnitOfTime = maxUnitOfTime || 59;
       if (control == null) {
         return null;
       }
-      const value: string = control.value;
-      if (value.match('^\\d+:\\d{2}:\\d{2}$')) {
-        return null;
+
+      if (!control.value.match('^[0123456789]+$')) {
+        return {
+          NaN: false,
+        };
       }
-      return {
-        test: false,
-      };
+
+      const value: number = parseInt(control.value);
+      if (value > maxUnitOfTime) {
+        return {
+          greaterThanMaxUnitOfTime: 'Greater than maximum unit of time',
+        };
+      }
+      return null;
     };
   }
 }
