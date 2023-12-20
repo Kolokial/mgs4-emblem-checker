@@ -1,10 +1,9 @@
 import { Component } from '@angular/core';
-import { AbstractControl, FormControl, FormGroup, ValidatorFn } from '@angular/forms';
+import { FormControl, FormGroup } from '@angular/forms';
 import { IGameDataFormMetaData } from './IGameDataFormControls';
 import { GameDataService } from '../game-data-service/game-data.service';
 import { Difficulty } from './DifficultyEnums';
 import { KeyValue } from '@angular/common';
-import { Duration } from '../helpers/duration/duration.component';
 
 @Component({
   selector: 'game-data-input',
